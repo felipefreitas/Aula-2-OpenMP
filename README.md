@@ -12,7 +12,7 @@ Crie o arquivo `main.cpp` contendo o seguinte código:
 
 ```cpp
 #include <iostream>
-#include “omp.h” //arquivo include openmp
+#include <omp.h> //arquivo include openmp
 using namespace std;
 
 int main(int argc, char *argv[])
@@ -46,17 +46,121 @@ $ g++ -fopenmp main.cpp -o output
 $ ./output
 ```
 
-OpenMP is a multi-threading, shared address model.
-– Threads communicate by sharing variables.  Unintended sharing of data causes race
-conditions:
-– race condition: when the program’s outcome changes as the threads are scheduled differently.
- To control race conditions:
-– Use synchronization to protect data conflicts.
-\ Synchronization is expensive so:
-– Change how data is accessed to minimize the need
-for synchronization.
+OpenMP segue um modelo multi-thread de memória compartilhada. As threads se comunicam de forma implícita compartilhando variáveis: uma thread escreve na variável e a outra lê. O acesso concorrente não protegido a essas variáveis causa condições de corrida. (A saída do programa depende da ordem de execução das threads)
+–- Uma solução é o uso de sincronização. Mas sincronização serializa a execução de seu código. Melhor: minimize a necessidade de sincronização. 
 
-## Exercício: ![integração numérica] (./integracao.png)
+## Exercício: 
+![integração numérica](./integracao.png)
+
+Solução sequencial. Veja o uso da função omp_get_wtime()
+
+```cpp
+#include <stdio.h>
+#include <omp.h>
+static long num_steps = 1000000;
+double step;
+int main ()
+{
+	  int i;
+	  double x, pi, sum = 0.0;
+	  double start_time, run_time;
+
+	  step = 1.0/(double) num_steps;
+
+        	 
+	  start_time = omp_get_wtime();
+
+	  for (i=1;i<= num_steps; i++){
+		  x = (i-0.5)*step;
+		  sum = sum + 4.0/(1.0+x*x);
+	  }
+
+	  pi = step * sum;
+	  run_time = omp_get_wtime() - start_time;
+	  printf("\n pi with %d steps is %f in %f seconds ",num_steps,pi,run_time);
+}	  
+```
+
+Solução paralela: (tente resolver sem ver a solução!)
+```cpp
+The program was parallelized using OpenMP and an SPMD 
+algorithm.  The following OpenMP specific lines were 
+added: 
+
+(1) A line to include omp.h -- the include file that 
+contains OpenMP's function prototypes and constants.
+
+(2) A pragma that tells OpenMP to create a team of threads
+with an integer variable i being created for each thread.
+
+(3) two function calls: one to get the thread ID (ranging
+from 0 to one less than the number of threads), and the other
+returning the total number of threads.
+
+(4) A cyclic distribution of the loop by changing loop control
+expressions to run from the thread ID incremented by the number 
+of threads.  Local sums accumlated into sum[id].
+
+Note that this program will show low performance due to 
+false sharing.  In particular, sum[id] is unique to each
+thread, but adfacent values of this array share a cache line
+causing cache thrashing as the program runs.
+
+History: Written by Tim Mattson, 11/99.
+
+*/
+
+#include <stdio.h>
+#include <omp.h>
+
+#define MAX_THREADS 4
+
+static long num_steps = 100000000;
+double step;
+int main ()
+{
+	  int i,j;
+	  double pi, full_sum = 0.0;
+	  double start_time, run_time;
+	  double sum[MAX_THREADS];
+
+	  step = 1.0/(double) num_steps;
+
+
+   for (j=1;j<=MAX_THREADS ;j++) {
+
+      omp_set_num_threads(j);
+      full_sum=0.0;
+      start_time = omp_get_wtime();
+
+      #pragma omp parallel
+      {
+        int i;
+	  int id = omp_get_thread_num();
+	  int numthreads = omp_get_num_threads();
+	  double x;
+
+	  sum[id] = 0.0;
+
+        if (id == 0) 
+             printf(" num_threads = %d",numthreads);
+
+	  for (i=id;i< num_steps; i+=numthreads){
+		  x = (i+0.5)*step;
+		  sum[id] = sum[id] + 4.0/(1.0+x*x);
+	  }
+      }
+
+	for(full_sum = 0.0, i=0;i<j;i++)
+	    full_sum += sum[i];
+
+      pi = step * full_sum;
+      run_time = omp_get_wtime() - start_time;
+      printf("\n pi is %f in %f seconds %d thrds \n",pi,run_time,j);
+   }
+}
+```
+
 
 ```cpp
 void simple(int n, float *a, float *b)
@@ -67,13 +171,3 @@ int i;
 }
 
 ```
-
-Qual é a saída da execução? Exatamente **p** vezes o texto "Hello World!", sendo **p** o número de *threads* do processador.
-
-Como podemos saber quantas threads podem ser executadas em nosso computador simultâneamente? Veja em /proc/cpuinfo o campo "physical id" quantos cores tem no seu computador, ou execute:
-
-
-
-
-
-[Para ver um comparativo entre as abordagens clique aqui](./examples)
