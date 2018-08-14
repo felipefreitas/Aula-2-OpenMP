@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
     //Fim da regiao paralela
 }
 ```
+![O que o compilador faz](./compilerOpenmp.png)
 
 **Boa política! Em caso de necessidade de desabilitar as directivas OpenMP, é possível usar compilação condicional. O seguinte exemplo demostra o uso de compilação condicional usando a macro OpenMP _OPENMP . Ao compilar OpenMP, a macro _OPENMP é definida.
 
