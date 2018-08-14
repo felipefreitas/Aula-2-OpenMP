@@ -27,16 +27,20 @@ int main ()
 			int id = omp_get_thread_num();
 			int numthreads = omp_get_num_threads();
 			double x;
+			double aux;
 
-			sum[id] = 0.0;
+			aux = 0.0;
+			// sum[id] = 0.0;
 
 			if (id == 0)
 				printf(" num_threads = %d",numthreads);
 
 			for (i=id;i< num_steps; i+=numthreads){
 				x = (i+0.5)*step;
-				sum[id] = sum[id] + 4.0/(1.0+x*x);
+				// sum[id] = sum[id] + 4.0/(1.0+x*x);
+				aux = aux + 4.0/(1.0+x*x);
 			}
+			sum[id] = aux;
 		}
 
 		for(full_sum = 0.0, i=0;i<j;i++)
