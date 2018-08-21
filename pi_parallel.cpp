@@ -35,7 +35,7 @@ int main ()
 			if (id == 0)
 				printf(" num_threads = %d",numthreads);
 
-			for (i=id;i< num_steps; i+=numthreads){
+			for (i=0;i< num_steps; i+=numthreads){
 				x = (i+0.5)*step;
 				// sum[id] = sum[id] + 4.0/(1.0+x*x);
 				aux = aux + 4.0/(1.0+x*x);
